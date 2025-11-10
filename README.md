@@ -66,154 +66,174 @@ A production-grade full-stack web application featuring an interactive analytics
 ```bash
 git clone https://github.com/Garvit-Pahwa-03/Flowbit-task
 cd Flowbit-task
-2. Set Up Environment Variables
-Create a .env file in /apps/api and /services/vanna. Use the .env.example files in those directories as a template.
-/apps/api/.env:
-code
-Env
+```
+### 2. Set Up Environment Variables
+Create a `.env` file in `/apps/api` and `/services/vanna`. Use the `.env.example` files in those directories as a template.
+
+**For `/apps/api/.env`:**
+```env
 DATABASE_URL="postgresql://USER:PASSWORD@HOST:PORT/DATABASE"
 VANNA_API_BASE_URL="http://localhost:8000" # Default local Vanna URL
-/services/vanna/.env:
-code
-Env
+```
+**For `/services/vanna/.env`:**
+```env
 # For Vanna's Python psycopg driver
 DATABASE_URL="postgresql+psycopg://USER:PASSWORD@HOST:PORT/DATABASE"
 GROQ_API_KEY="your-groq-api-key"
 PORT=8000
-3. Install Dependencies
+```
+### 3. Install Dependencies
 From the root directory of the project, run:
-code
-Bash
+```bash
 npm install
-4. Set Up the Database
+```
+### 4. Set Up the Database
 Ensure your PostgreSQL server is running and you have created a database. Then, run the migration and seed scripts from the root directory:
-code
-Bash
+
+```bash
 # Apply the database schema
 npm run db:migrate
 
 # Seed the database with the provided JSON data
 npm run db:seed
-5. Run the Application
+```
+### 5. Run the Application
 Run all parts of the monorepo concurrently from the root directory:
-code
-Bash
+
+```bash
 npm run dev
+```
 The application will be available at:
-Frontend: http://localhost:3000
-Vanna AI Service: http://localhost:8000
-📄 Database Schema
+*   **Frontend:** `http://localhost:3000`
+*   **Vanna AI Service:** `http://localhost:8000`
+
+---
+## 📄 Database Schema
 The database is designed to normalize the nested JSON data into a relational structure.
-vendors: Stores unique vendor information.
-categories: Stores spending categories (Sachkonto).
-invoices: The central table for all invoice-level data, linked to a vendor.
-lineItems: Contains individual line items for each invoice, linked to categories.
-documents: Stores metadata about the source document and a copy of the raw JSON data for auditing.
-The relationships (one-to-many, one-to-one) are defined using Drizzle ORM to ensure data integrity and enable efficient joins. The complete schema can be viewed in /packages/db/schema.ts.
-⚙️ API Endpoints
-GET /api/stats
-Description: Returns totals for the overview cards on the dashboard.
-Example Response:
-code
-JSON
-{
-  "totalSpendYTD": "5.046,42",
-  "totalInvoicesProcessed": 49,
-  "documentsUploadedThisMonth": 11,
-  "averageInvoiceValue": "614,88"
-}
-GET /api/invoice-trends
-Description: Returns monthly invoice counts and total spend for the line chart.
-Example Response:
-code
-JSON
-{
-  "labels": ["2014-05", "2015-08", "2020-01", "2020-05", "..."],
-  "invoiceCounts": [1, 1, 1, 1, "..."],
-  "totalSpends": [312.96, 1190, 3653.3, 4645, "..."]
-}
-GET /api/vendors/top10
-Description: Returns the top 10 vendors by total spend.
-Example Response:
-code
-JSON
-[
-  {
-    "vendorName": "CPB SOFTWARE (GERMANY) GMBH",
-    "totalSpend": "14101.44"
-  },
-  {
-    "vendorName": "EasyFirma GmbH & Co KG",
-    "totalSpend": "5680.00"
-  }
-]
-GET /api/category-spend
-Description: Returns total spend grouped by category for the pie chart.
-Example Response:
-code
-JSON
-[
-  {
-    "category": "Account 4400",
-    "totalSpend": "7087.15"
-  },
-  {
-    "category": "Account 4910",
-    "totalSpend": "2294.90"
-  }
-]
-GET /api/cash-outflow
-Description: Returns expected cash outflow data for the forecast chart.
-Example Response:
-code
-JSON
-[
-  { "range": "0-7 days", "totalAmount": "0.00" },
-  { "range": "8-30 days", "totalAmount": "0.00" },
-  { "range": "31-60 days", "totalAmount": "0.00" },
-  { "range": "60+ days", "totalAmount": "0.00" }
-]
-GET /api/invoices
-Description: Returns a list of invoices, supporting filtering and searching.
-Example Response:
-code
-JSON
-[
-  {
-    "id": 9,
-    "invoiceNumber": "1234",
-    "vendorId": 9,
-    "status": "processed",
-    "invoiceDate": "2025-11-04",
-    "totalAmount": "-358.79",
-    "vendor": {
-      "id": 9,
-      "name": "Musterfirma Müller"
+*   **`vendors`**: Stores unique vendor information.
+*   **`categories`**: Stores spending categories (`Sachkonto`).
+*   **`invoices`**: The central table for all invoice-level data, linked to a vendor.
+*   **`lineItems`**: Contains individual line items for each invoice, linked to categories.
+*   **`documents`**: Stores metadata about the source document and a copy of the raw JSON data for auditing.
+
+The relationships (one-to-many, one-to-one) are defined using Drizzle ORM to ensure data integrity and enable efficient joins. The complete schema can be viewed in `/packages/db/schema.ts`.
+
+---
+## ⚙️ API Endpoints
+
+**`GET /api/stats`**
+*   **Description:** Returns totals for the overview cards on the dashboard.
+*   **Example Response:**
+    ```json
+    {
+      "totalSpendYTD": "5.046,42",
+      "totalInvoicesProcessed": 49,
+      "documentsUploadedThisMonth": 11,
+      "averageInvoiceValue": "614,88"
     }
-  }
-]
-POST /api/chat-with-data
-Description: Forwards a natural language query to the Vanna AI service.
-Request Body: {"question": "List top 5 vendors by spend"}
-Example Response (from Vanna):
-code
-JSON
-{
-  "sql": "SELECT \n    v.name, \n    SUM(li.total_price) AS total_spend\nFROM \n    vendors v\nJOIN \n    invoices i ON v.id = i.vendor_id\nJOIN \n    line_items li ON i.id = li.invoice_id\nGROUP BY \n    v.name\nORDER BY \n    total_spend DESC\nLIMIT 5;",
-  "result": [
-    {"name": "CPB SOFTWARE (GERMANY) GMBH", "total_spend": "14101.44"},
-    {"name": "EasyFirma GmbH & Co KG", "total_spend": "6318.50"},
-    {"name": "ABC Seller", "total_spend": "4357.60"},
-    {"name": "pixa", "total_spend": "3070.00"},
-    {"name": "Taxon GmbH", "total_spend": "541.45"}
-  ]
-}
-⚠️ Project Notes
-1. "Chat With Data" Deployment Status
+    ```
+
+**`GET /api/invoice-trends`**
+*   **Description:** Returns monthly invoice counts and total spend for the line chart.
+*   **Example Response:**
+    ```json
+    {
+      "labels": ["2014-05", "2015-08", "2020-01", "2020-05", "..."],
+      "invoiceCounts": [1, 1, 1, 1, "..."],
+      "totalSpends": [312.96, 1190, 3653.3, 4645, "..."]
+    }
+    ```
+
+**`GET /api/vendors/top10`**
+*   **Description:** Returns the top 10 vendors by total spend.
+*   **Example Response:**
+    ```json
+    [
+      {
+        "vendorName": "CPB SOFTWARE (GERMANY) GMBH",
+        "totalSpend": "14101.44"
+      },
+      {
+        "vendorName": "EasyFirma GmbH & Co KG",
+        "totalSpend": "5680.00"
+      }
+    ]
+    ```
+
+**`GET /api/category-spend`**
+*   **Description:** Returns total spend grouped by category for the pie chart.
+*   **Example Response:**
+    ```json
+    [
+      {
+        "category": "Account 4400",
+        "totalSpend": "7087.15"
+      },
+      {
+        "category": "Account 4910",
+        "totalSpend": "2294.90"
+      }
+    ]
+    ```
+
+**`GET /api/cash-outflow`**
+*   **Description:** Returns expected cash outflow data for the forecast chart.
+*   **Example Response:**
+    ```json
+    [
+      { "range": "0-7 days", "totalAmount": "0.00" },
+      { "range": "8-30 days", "totalAmount": "0.00" },
+      { "range": "31-60 days", "totalAmount": "0.00" },
+      { "range": "60+ days", "totalAmount": "0.00" }
+    ]
+    ```
+
+**`GET /api/invoices`**
+*   **Description:** Returns a list of invoices, supporting filtering and searching.
+*   **Example Response:**
+    ```json
+    [
+      {
+        "id": 9,
+        "invoiceNumber": "1234",
+        "vendorId": 9,
+        "status": "processed",
+        "invoiceDate": "2025-11-04",
+        "totalAmount": "-358.79",
+        "vendor": {
+          "id": 9,
+          "name": "Musterfirma Müller"
+        }
+      }
+    ]
+    ```
+
+**`POST /api/chat-with-data`**
+*   **Description:** Forwards a natural language query to the Vanna AI service.
+*   **Request Body:** `{"question": "List top 5 vendors by spend"}`
+*   **Example Response (from Vanna):**
+    ```json
+    {
+      "sql": "SELECT \n    v.name, \n    SUM(li.total_price) AS total_spend\nFROM \n    vendors v\nJOIN \n    invoices i ON v.id = i.vendor_id\nJOIN \n    line_items li ON i.id = li.invoice_id\nGROUP BY \n    v.name\nORDER BY \n    total_spend DESC\nLIMIT 5;",
+      "result": [
+        {"name": "CPB SOFTWARE (GERMANY) GMBH", "total_spend": "14101.44"},
+        {"name": "EasyFirma GmbH & Co KG", "total_spend": "6318.50"},
+        {"name": "ABC Seller", "total_spend": "4357.60"},
+        {"name": "pixa", "total_spend": "3070.00"},
+        {"name": "Taxon GmbH", "total_spend": "541.45"}
+      ]
+    }
+    ```
+---
+## ⚠️ Project Notes
+### 1. "Chat With Data" Deployment Status
 The "Chat with Data" feature is fully functional in the local development environment. However, due to time constraints, I encountered issues with the environment configuration for the deployed Vanna AI service on Render, which currently prevents the chat from working correctly on the live Vercel deployment. The local setup instructions provide a reliable way to test this feature's full capabilities.
-2. Cash Outflow Forecast Data
-The "Cash Outflow Forecast" component and its corresponding backend API (/api/cash-outflow) are fully implemented and function correctly. The chart appears empty because the provided dataset, Analytics_Test_Data.json, is a historical snapshot and contains no invoices with future due dates. The API logic correctly queries the database for invoices where the status is not paid and the dueDate is on or after today's date. Since no records in the dataset match these criteria, the API correctly returns an empty data array, and the chart correctly renders an empty state.
-🧑‍💻 Author
-Name: Garvit Pahwa
-GitHub: https://github.com/Garvit-Pahwa-03
-LinkedIn: https://www.linkedin.com/in/garvit-pahwa-3aa7b3315/
+
+### 2. Cash Outflow Forecast Data
+The "Cash Outflow Forecast" component and its corresponding backend API (`/api/cash-outflow`) are fully implemented and function correctly. The chart appears empty because the provided dataset, `Analytics_Test_Data.json`, is a historical snapshot and contains no invoices with future due dates. The API logic correctly queries the database for invoices where the status is not `paid` and the `dueDate` is on or after today's date. Since no records in the dataset match these criteria, the API correctly returns an empty data array, and the chart correctly renders an empty state.
+
+---
+## 🧑‍💻 Author
+*   **Name:** Garvit Pahwa
+*   **GitHub:** [https://github.com/Garvit-Pahwa-03](https://github.com/Garvit-Pahwa-03)
+*   **LinkedIn:** [https://www.linkedin.com/in/garvit-pahwa-3aa7b3315/](https://www.linkedin.com/in/garvit-pahwa-3aa7b3315/)
