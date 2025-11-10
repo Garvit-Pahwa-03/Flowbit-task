@@ -17,8 +17,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Forward request to Vanna AI service
-    const vannaResponse = await fetch(`${VANNA_API_URL}/query`, {
+    const cleanedBaseUrl = VANNA_API_URL.replace(/\/$/, "");
+    const fullVannaUrl = cleanedBaseUrl + "/query";
+    console.log(`Constructed URL for Vanna: ${fullVannaUrl}`);
+
+    const vannaResponse = await fetch(fullVannaUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -28,10 +31,20 @@ export async function POST(request: NextRequest) {
 
     console.log('Vanna response status:', vannaResponse.status);
 
-    const data = await vannaResponse.json();
+    const responseText = await vannaResponse.text();
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (e) {
+      console.error("Failed to parse JSON from Vanna. Response was:", responseText);
+      return NextResponse.json(
+        { error: "Received an invalid (non-JSON) response from the Vanna AI service.", details: responseText },
+        { status: 500 }
+      );
+    }
+
     console.log('Vanna response data:', data);
 
-    // Check if there's an error in the response
     if (data.error) {
       return NextResponse.json(
         {
@@ -40,7 +53,7 @@ export async function POST(request: NextRequest) {
           results: data.results || { columns: [], data: [], row_count: 0 },
           error: data.error,
         },
-        { status: 200 } // Still return 200 so frontend can display the error
+        { status: 200 }
       );
     }
 
