@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { getBaseURL } from '@/lib/utils'; // <-- CHANGE 1: Import the helper function
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -33,7 +34,8 @@ export default function ChatWithData() {
     setLoading(true);
 
     try {
-      const response = await fetch('/api/chat-with-data', {
+      const baseURL = getBaseURL(); // <-- CHANGE 2: Call the function
+      const response = await fetch(`${baseURL}/api/chat-with-data`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -46,8 +48,8 @@ export default function ChatWithData() {
 
       const assistantMessage: ChatMessage = {
         role: 'assistant',
-        content: data.error 
-          ? `Error: ${data.error}` 
+        content: data.error
+          ? `Error: ${data.error}`
           : `Found ${data.results?.row_count || 0} results`,
         sql: data.sql,
         results: data.results,
