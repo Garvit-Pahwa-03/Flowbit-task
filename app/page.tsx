@@ -1,3 +1,5 @@
+// FILE: app/page.tsx
+
 import { Suspense } from "react";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { InvoiceTrendChart } from "@/components/dashboard/invoice-trend-chart";
@@ -6,6 +8,7 @@ import { CategorySpendChart } from "@/components/dashboard/category-spend-chart"
 import { CashflowChart } from "@/components/dashboard/cashflow-chart";
 import { InvoicesTable } from "@/components/dashboard/invoices-table";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { getBaseURL } from "@/lib/utils"; // <-- CHANGE 1: Import the helper function
 
 const LoadingSkeleton = ({ title, className }: { title: string, className?: string }) => (
   <Card className={className}>
@@ -20,7 +23,9 @@ type Stats = {
 };
 
 export default async function DashboardPage() {
-  const res = await fetch('http://localhost:3000/api/stats', { cache: 'no-store' });
+  const baseURL = getBaseURL(); // <-- CHANGE 2: Call the function to get the correct URL
+  const res = await fetch(`${baseURL}/api/stats`, { cache: 'no-store' }); // Use the baseURL here
+
   if (!res.ok) { return <div className="p-6 text-red-500">Error: Could not load dashboard stats. Is the backend running?</div>; }
   const stats: Stats = await res.json();
 
