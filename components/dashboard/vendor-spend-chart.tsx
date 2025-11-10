@@ -15,16 +15,22 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
+// Add type definition for vendor data
+interface VendorData {
+  vendorName: string;
+  totalSpend: number | string;
+}
+
 export function VendorSpendChart() {
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<VendorData[]>([]);
 
   useEffect(() => {
     fetch('/api/vendors/top10')
       .then(res => res.json())
-      .then(vendorData => {
+      .then((vendorData: VendorData[]) => {
         // Reverse data so the highest value is at the top of the chart
         const reversedData = vendorData.reverse();
-        setData(reversedData.map(v => ({ ...v, totalSpend: parseFloat(v.totalSpend) })));
+        setData(reversedData.map((v: VendorData) => ({ ...v, totalSpend: parseFloat(v.totalSpend as string) })));
       });
   }, []);
 
