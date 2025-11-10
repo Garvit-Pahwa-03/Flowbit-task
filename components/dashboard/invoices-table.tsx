@@ -1,5 +1,8 @@
+// FILE: components/dashboard/invoices-table.tsx
+
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { getBaseURL } from "@/lib/utils"; // <-- CHANGE 1: Import the helper function
 
 // Define the type for a single invoice based on our API response
 interface Invoice {
@@ -29,7 +32,8 @@ function formatDate(dateString: string | null): string {
 
 // This is an async Server Component, fetching data on the server.
 export async function InvoicesTable() {
-  const res = await fetch('http://localhost:3000/api/invoices', { cache: 'no-store' });
+  const baseURL = getBaseURL(); // <-- CHANGE 2: Call the function
+  const res = await fetch(`${baseURL}/api/invoices`, { cache: 'no-store' });
   const invoices: Invoice[] = await res.json();
 
   return (
