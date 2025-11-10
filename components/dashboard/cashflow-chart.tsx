@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { getBaseURL } from '@/lib/utils'; // <-- CHANGE 1: Import the helper function
 
 // Custom tooltip to show formatted currency
 const CustomTooltip = ({ active, payload }: any) => {
@@ -23,7 +24,8 @@ export function CashflowChart() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/cash-outflow')
+    const baseURL = getBaseURL(); // <-- CHANGE 2: Call the function
+    fetch(`${baseURL}/api/cash-outflow`)
       .then(res => res.json())
       .then(d => {
         // Format the data with proper numeric values
@@ -62,39 +64,39 @@ export function CashflowChart() {
           </div>
         ) : (
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart 
-              data={data} 
+            <BarChart
+              data={data}
               margin={{ top: 10, right: 10, left: -20, bottom: 5 }}
               barCategoryGap="20%"
             >
-              <XAxis 
-                dataKey="range" 
-                stroke="#9ca3af" 
+              <XAxis
+                dataKey="range"
+                stroke="#9ca3af"
                 fontSize={11}
-                tickLine={false} 
+                tickLine={false}
                 axisLine={false}
                 tick={{ fill: '#6b7280' }}
               />
-              <YAxis 
-                stroke="#9ca3af" 
+              <YAxis
+                stroke="#9ca3af"
                 fontSize={11}
-                tickLine={false} 
+                tickLine={false}
                 axisLine={false}
                 domain={[0, yAxisMax]}
                 tickFormatter={(value) => `€${(value / 1000).toFixed(0)}k`}
                 tick={{ fill: '#6b7280' }}
               />
               <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(99, 102, 241, 0.05)' }} />
-              <Bar 
-                dataKey="totalAmount" 
-                fill="#312e81" 
-                name="Amount" 
+              <Bar
+                dataKey="totalAmount"
+                fill="#312e81"
+                name="Amount"
                 radius={[8, 8, 0, 0]}
                 maxBarSize={80}
               >
                 {data.map((entry, index) => (
-                  <Cell 
-                    key={`cell-${index}`} 
+                  <Cell
+                    key={`cell-${index}`}
                     fill={entry.totalAmount > 0 ? "#312e81" : "#e5e7eb"}
                   />
                 ))}
